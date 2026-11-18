@@ -54,3 +54,8 @@ powershell -ExecutionPolicy Bypass -File build.ps1
 - Do not leave windows on the screen: use `--shot` and `--headless` for checks.
 - `--demo` and `--selftest` must not touch the real settings folder, the registry or the network.
 - No features, numbers or claims in README or interface text that the code does not back.
+
+## Дорога к core.txt и движение
+
+- В каждом приложении в одном тихом месте (настройки, меню или «О программе») есть кнопка из `CoreApp.cs`: «Открыть core.txt», а если лаунчера нет — «Скачать core.txt». Файл копируется из kit.txt (`hub/CoreApp.cs`) как есть.
+- Любое действие отмечается движением из `Motion` (`Ui.cs`): смена надписи — `Swap`, появление и скрытие — `Show`, «готово» — `Pop` и `Glow`, ошибка — `Shake`, идёт работа — `Breathe`, бегущая полоса `Progress.Busy`, мерцающая точка `Status.Busy`. Ничего не появляется рывком; при «Меньше движения» всё встаёт сразу.
