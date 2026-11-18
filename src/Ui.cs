@@ -413,4 +413,61 @@ namespace DevTxt
             }
         }
     }
+
+    // Движение — общие приёмы; те же, что в ui/kit.css. При «Меньше движения» всё сразу встаёт на место.
+    static class Motion
+    {
+        static IEasingFunction Out() { return new CubicEase { EasingMode = EasingMode.EaseOut }; }
+
+        // Появление по очереди: дети поднимаются и проявляются волной, сосед за соседом
+        public static void Stagger(Panel panel)
+        {
+            if (Ui.ReducedMotion) return;
+            int i = 0;
+            foreach (UIElement child in panel.Children)
+            {
+                if (child.Visibility != Visibility.Visible) continue;
+                var shift = new TranslateTransform(0, 12);
+                child.RenderTransform = shift;
+                child.Opacity = 0;
+                var begin = TimeSpan.FromMilliseconds(Math.Min(i, 11) * Tokens.Motion.StaggerMs);
+                var time = TimeSpan.FromMilliseconds(Tokens.Motion.SlowMs);
+                shift.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(12, 0, time) { BeginTime = begin, EasingFunction = Out() });
+                child.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 1, time) { BeginTime = begin, EasingFunction = Out() });
+                i++;
+            }
+        }
+
+        // Вырастание из точки: окно или меню появляется из того места, по которому щёлкнули.
+        // origin — в долях размера элемента (0.5, 0.5 — из середины).
+        public static void GrowFrom(FrameworkElement element, Point origin)
+        {
+            if (Ui.ReducedMotion) return;
+            var scale = new ScaleTransform(0.86, 0.86);
+            element.RenderTransformOrigin = origin;
+            element.RenderTransform = scale;
+            var time = TimeSpan.FromMilliseconds(Tokens.Motion.BaseMs);
+            scale.BeginAnimation(ScaleTransform.ScaleXProperty, new DoubleAnimation(0.86, 1, time) { EasingFunction = Out() });
+            scale.BeginAnimation(ScaleTransform.ScaleYProperty, new DoubleAnimation(0.86, 1, time) { EasingFunction = Out() });
+            element.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 1, time) { EasingFunction = Out() });
+        }
+
+        // Набегающее число: текст считает от from до to; show превращает число в надпись («66,0 МБ»)
+        public static void Count(TextBlock text, double from, double to, Func<double, string> show)
+        {
+            if (Ui.ReducedMotion || from == to) { text.Text = show(to); return; }
+            var started = DateTime.UtcNow;
+            double length = Tokens.Motion.RevealMs * 2;
+            var timer = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Render) { Interval = TimeSpan.FromMilliseconds(16) };
+            timer.Tick += delegate
+            {
+                double t = Math.Min(1, (DateTime.UtcNow - started).TotalMilliseconds / length);
+                double eased = 1 - Math.Pow(1 - t, 3);
+                text.Text = show(from + (to - from) * eased);
+                if (t >= 1) timer.Stop();
+            };
+            text.Text = show(from);
+            timer.Start();
+        }
+    }
 }
