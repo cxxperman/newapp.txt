@@ -13,7 +13,7 @@ namespace DevTxt.NewApp
 {
     class MainWindow : Window
     {
-        const double W = 560, H = 340;
+        const double W = 880, H = 560;
         // Значок-заготовка. Нарисуйте свой: строки из «.» (пусто), «#» (тело) и «E» (глаз) — см. README, «Значок».
         internal static readonly string[] Sprite = { "..######..", ".########.", "##########", "##E####E##", "##E####E##", "##########", "##########", ".########.", "..######.." };
 
@@ -54,29 +54,15 @@ namespace DevTxt.NewApp
         // ───────── Разметка ─────────
         FrameworkElement Build()
         {
-            var root = new Grid { Background = Ui.Bg, Width = W, Height = H, ClipToBounds = true };
-            root.Children.Add(Ui.Backdrop());
-            var layout = new DockPanel { LastChildFill = true };
-            root.Children.Add(layout);
-
-            // Шапка: за неё окно перетаскивается
-            var header = new Grid { Height = 92, Background = Brushes.Transparent };
-            header.MouseLeftButtonDown += delegate(object s, MouseButtonEventArgs e) { if (e.ButtonState == MouseButtonState.Pressed) try { DragMove(); } catch { } };
-            var mark = Ui.Sprite(Sprite, 40);
-            mark.VerticalAlignment = VerticalAlignment.Center;
-            var title = Ui.Brand(Program.Id, Tokens.Size.Display, FontWeights.Bold);
-            title.Margin = new Thickness(10, 0, 0, 2); title.VerticalAlignment = VerticalAlignment.Center;
-            header.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(32, 22, 0, 0), VerticalAlignment = VerticalAlignment.Center, Children = { mark, title } });
-
-            header.Children.Add(Ui.CaptionButtons(this, Close));   // кнопки окна как у Windows 11
-            DockPanel.SetDock(header, Dock.Top);
-            layout.Children.Add(header);
-
-            // Низ: версия и подпись
-            var footer = Ui.T("версия " + Program.VersionText + " · dev.txt™", Tokens.Size.Caption, Ui.Label3, FontWeights.Normal);
-            footer.Margin = new Thickness(32, 0, 32, 24);
-            DockPanel.SetDock(footer, Dock.Bottom);
-            layout.Children.Add(footer);
+            // Общий каркас dev.txt: слева значок, имя и разделы, справа заголовок, страница и нижняя строка.
+            // У нового приложения раздел пока один — добавляйте свои через shell.Add.
+            var shell = new NavShell(this, Sprite, Program.Id, "версия " + Program.VersionText, Close);
+            shell.Add("Главное", Ui.Glyph(""));
+            shell.Selected = 0;
+            shell.Title("Главное", "Заготовка приложения dev.txt: настройка и связь с core.txt");
+            var footer = Ui.T("dev.txt™", Tokens.Size.Caption, Ui.Label3, FontWeights.Normal);
+            footer.VerticalAlignment = VerticalAlignment.Center;
+            shell.Bottom.Children.Add(footer);
 
             // Блок: настройка с переключателем, под ней — связь с core.txt и кнопка
             var text = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 16, 0) };
@@ -90,7 +76,7 @@ namespace DevTxt.NewApp
             setting.Children.Add(onTop.Root);
             setting.Children.Add(text);
 
-            var line = new Border { Height = 1, Background = Ui.Solid(Tokens.Dark.Separator), Margin = new Thickness(0, 16, 0, 16) };
+            var line = new Border { Height = 1, Background = Ui.Separator, Margin = new Thickness(0, 16, 0, 16) };
 
             var link = new DockPanel { LastChildFill = true };
             coreBtn.Root.VerticalAlignment = VerticalAlignment.Center;
@@ -103,8 +89,8 @@ namespace DevTxt.NewApp
             var block = Ui.Block(new StackPanel { Children = { setting, line, link } }, true);
             block.Margin = new Thickness(32, 0, 32, 0);
             block.VerticalAlignment = VerticalAlignment.Top;
-            layout.Children.Add(block);
-            return root;
+            shell.Body.Children.Add(block);
+            return shell.Root;
         }
 
         FrameworkElement WindowButton(string glyph, string tip, bool danger, Action click)
