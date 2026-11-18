@@ -30,8 +30,9 @@ namespace DevTxt.NewApp
             this.demo = demo;
             Title = Program.Id + ".txt";
             Width = W; Height = H;
-            WindowStyle = WindowStyle.None;
-            ResizeMode = ResizeMode.CanMinimize;
+            // Родное окно Windows 11: системная рамка и тень, Mica, тема Windows, прилипание к краям экрана
+            Ui.ThemeFollows = !demo;
+            Ui.Native(this, false);
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
             Background = Ui.Bg;
             FontFamily = Ui.TextFont;
@@ -48,13 +49,6 @@ namespace DevTxt.NewApp
             Prefs.Changed += delegate { onTop.Value = Prefs.OnTop; Topmost = Prefs.OnTop; };
             AppHub.StatusChanged += Render;
 
-            SourceInitialized += delegate
-            {
-                IntPtr hwnd = new WindowInteropHelper(this).Handle;
-                int round = 2, dark = 1;   // скруглённые углы и тёмная рамка окна в Windows 11
-                DwmSetWindowAttribute(hwnd, 33, ref round, sizeof(int));
-                DwmSetWindowAttribute(hwnd, 20, ref dark, sizeof(int));
-            };
         }
 
         // ───────── Разметка ─────────
@@ -74,10 +68,7 @@ namespace DevTxt.NewApp
             title.Margin = new Thickness(10, 0, 0, 2); title.VerticalAlignment = VerticalAlignment.Center;
             header.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(32, 22, 0, 0), VerticalAlignment = VerticalAlignment.Center, Children = { mark, title } });
 
-            var controls = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 6, 8, 0) };
-            controls.Children.Add(WindowButton("", "Свернуть", false, delegate { WindowState = WindowState.Minimized; }));
-            controls.Children.Add(WindowButton("", "Закрыть", true, delegate { Close(); }));
-            header.Children.Add(controls);
+            header.Children.Add(Ui.CaptionButtons(this, Close));   // кнопки окна как у Windows 11
             DockPanel.SetDock(header, Dock.Top);
             layout.Children.Add(header);
 
